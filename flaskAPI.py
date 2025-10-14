@@ -20,13 +20,6 @@ def get_observations():
 def get_observations_by_date(start_date, end_date):
     return jsonify({"message": "This endpoint will return water quality summary stats for numeric fields."})
 
-@app.route('/')
-def index():
-    return "Water Quality Flask API. route:/data"
-
-@app.route("/data")
-def data():
-    return jsonify(df.head(5).to_dict(orient="records"))
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
