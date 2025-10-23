@@ -1,5 +1,4 @@
 from flask import Flask, jsonify, request
-import pandas as pd
 from dotenv import load_dotenv
 import os
 from pymongo import MongoClient
@@ -40,7 +39,74 @@ def health_check():
 
 @app.route("/api/observations")
 def get_observations():
-    return jsonify({"message": "This endpoint will return water quality observations."})
+
+    args = request.args
+    query = {}
+    errors = []
+
+    # Date range
+    start = args.get("start")
+    end = args.get("end")
+
+    # Numeric filters (Temperature, Salinity, ODO)
+    def f(name):
+        v = args.get(name)
+        if v is None or v == "":
+            return None
+        try:
+            return float(v)
+        except ValueError:
+            errors.append(f"'{name}' must be numeric.")
+            return None
+
+    for key, field in {
+        ("temp_min", "temp_max"): "Temperature (c)",
+        ("sal_min", "sal_max"): "Salinity (ppt)",
+        ("odo_min", "odo_max"): "ODO mg/L"
+    }.items():
+        lo, hi = f(key[0]), f(key[1])
+        if lo is not None or hi is not None:
+            rng = {}
+            if lo is not None:
+                rng["$gte"] = lo
+            if hi is not None:
+                rng["$lte"] = hi
+            query[field] = rng
+
+    # Pagination
+    try:
+        limit = min(max(int(args.get("limit", 100)), 1), 1000)
+        skip = max(int(args.get("skip", 0)), 0)
+    except ValueError:
+        errors.append("Invalid skip or limit.")
+
+    if errors:
+        return jsonify({"errors": errors}), 400
+
+    # Run query
+    total = robot1.count_documents(query)
+    cursor = (
+        robot1.find(
+            query,
+            {
+                "_id": 0,
+                "Date": 1,
+                "Time": 1,
+                "Temperature (c)": 1,
+                "Salinity (ppt)": 1,
+                "ODO mg/L": 1,
+            },
+        )
+        .sort("Time", -1)
+        .skip(skip)
+        .limit(limit)
+    )
+
+    return jsonify({
+        "count": total,
+        "items": list(cursor)
+    })
+
 
 @app.route("/api/stats") #f"{baseurl}/api/stats?field={stat}"
 def get_stats():
@@ -83,7 +149,6 @@ def get_stats():
     stats = {}
     for field in fields:
         stats[field] = raw.get(field, {})[0]
-
 
     return jsonify(stats)
 
