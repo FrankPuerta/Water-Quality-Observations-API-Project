@@ -27,7 +27,8 @@ def index():
         "routes":{
             "/api/health": "Health of API",
             "/api/observations": "List of all water quality observations",
-            "/api/observations/<start_date>/<end_date>": "Water quality summary stats for numeric fields between start and end date",
+            "/api/stats": "Water quality statistics",
+            "/api/outliers": "Water quality outlier information",
         }
     })
 
@@ -39,9 +40,13 @@ def health_check():
 def get_observations():
     return jsonify({"message": "This endpoint will return water quality observations."})
 
-@app.route("/api/observations/<start_date>/<end_date>")
-def get_observations_by_date(start_date, end_date):
-    return jsonify({"message": "This endpoint will return water quality summary stats for numeric fields."})
+@app.route("/api/stats")
+def get_stats():
+    return jsonify({"message": "This endpoint will return water quality observations."})
+
+@app.route("/api/outliers")
+def get_outliers():
+    return jsonify({"message": "This endpoint will return water quality observations."})
 
 
 if __name__ == "__main__":

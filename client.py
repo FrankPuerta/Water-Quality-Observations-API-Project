@@ -3,6 +3,8 @@ import streamlit as st
 import plotly.express as px
 import requests
 
+baseurl = "http://localhost:5000"
+
 st.set_page_config(page_title="Dashboard",
                    layout="wide")
 st.title("🌊 Water Quality Dashboard 🌊")
@@ -25,6 +27,20 @@ start_date, end_date = st.sidebar.select_slider(
     )
 
 st.sidebar.divider()
+st.sidebar.subheader("Min/Max Filters")
+
+st.sidebar.divider()
+st.sidebar.subheader("Limit and Pagination")
+
+left_button, right_button = st.sidebar.columns(2)
+if left_button.button("Filter", width="stretch"):
+    left_button.success("Filter Applied")
+if right_button.button("API Health", type="secondary", width="stretch"):
+    response = requests.get(f"{baseurl}/api/health")
+    if response.status_code == 200:
+        right_button.success("API is Healthy!")
+    else:
+        right_button.error("API is Down!")
 
 # """
 # --------------------------------------
@@ -32,7 +48,6 @@ st.sidebar.divider()
 # --------------------------------------
 # """
 st.divider()
-df = pd.read_csv("cleaned_datasets/2021-dec16.csv")
 
 lineChart, histogram, scatterPlot, maps = st.tabs(["Line Chart", "Histogram", "Scatter Plot", "Maps"])
 
