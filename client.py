@@ -61,7 +61,7 @@ odo_min, odo_max = st.sidebar.slider(
 st.sidebar.divider()
 st.sidebar.subheader("Limit and Pagination")
 limit = st.sidebar.number_input("Limit", min_value=100, max_value=1000, value=100)
-page = st.sidebar.number_input("Page", min_value=1, max_value=10, value=1)
+page = st.sidebar.number_input("Page", min_value=1, max_value=30, value=1)
 
 
 # --------------------------------------
@@ -80,22 +80,35 @@ if left_button.button("Pull Data", width="stretch"):
 
 # """
 # --------------------------------------
-# -           Main Page                -
+# -           Data table               -
 # --------------------------------------
 # """
-st.divider()
-
-lineChart, histogram, scatterPlot, maps = st.tabs(["Line Chart", "Histogram", "Scatter Plot", "Maps"])
 
 q_url = f"/api/observations?start={start_date}&end={end_date}&temp_min={temp_min}&temp_max={temp_max}&sal_min={sal_min}&sal_max={sal_max}&odo_min={odo_min}&odo_max={odo_max}&limit={limit}&page={page}"
 dataSet = requests.get(f"{baseurl}{q_url}").json()
 
-# MAIN DATAFRAME PULL FROM HERE <-----------------
+# MAIN DATAFRAME PULL FROM HERE vvvv-----------------
 df = pd.DataFrame(dataSet["items"])
+
+st.divider()
+st.subheader("Data Table")
+
+st.dataframe(df,use_container_width=True)
+
+
+# """
+# --------------------------------------
+# -           Visualizations           -
+# --------------------------------------
+# """
+st.divider()
+st.subheader("Visualizations Panel")
+lineChart, histogram, scatterPlot, maps = st.tabs(["Line Chart", "Histogram", "Scatter Plot", "Maps"])
 
 
 with lineChart:
     st.write("Line Chart")
+    st.line_chart(df[["Temperature (c)", "Salinity (ppt)", "ODO mg/L"]], x_label="Index", y_label="Values", use_container_width=True)
     
 with histogram:
     st.write("Histogram")
