@@ -69,8 +69,6 @@ st.sidebar.divider()
 left_button, right_button = st.sidebar.columns(2)
 if left_button.button("Pull Data", width="stretch"):
     left_button.success("Filter Applied")
-
-    # st.write(f"{baseurl}/api/observations?start={start_date}&end={end_date}&temp_min={temp_min}&temp_max={temp_max}&sal_min={sal_min}&sal_max={sal_max}&odo_min={odo_min}&odo_max={odo_max}&limit={limit}&page={page}")     
 # if right_button.button("API Health", width="stretch"):
 #     response = requests.get(f"{baseurl}/api/health")
 #     if response.status_code == 200:
@@ -140,3 +138,12 @@ if st.button("Get Stats"):
     # st.write(f"{baseurl}/api/stats?{api_call}") 
 
     st.table(requests.get(f"{baseurl}/api/stats?{api_call}").json())
+
+# """
+# --------------------------------------
+# -          Outliers Panel            -
+# --------------------------------------
+# """
+
+st.divider()
+st.subheader("Outliers Panel")
