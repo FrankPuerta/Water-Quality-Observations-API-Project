@@ -45,39 +45,47 @@ def get_observations():
 @app.route("/api/stats") #f"{baseurl}/api/stats?field={stat}"
 def get_stats():
 
-    field = request.args.get("field", default="ph", type=str)
-    count = robot1.count_documents({})
-    
-    pipeline = [
-        {"$group": {
-            "_id": None,
-            "count": {"$sum": 1},
-            "mean":  {"$avg": f"${field}"},
-            "min":   {"$min": f"${field}"},
-            "max":   {"$max": f"${field}"},
-            # MongoDB 5.2+: percentiles
-            "pct":   {"$percentile": {
-                "p": [0.25, 0.5, 0.75],
-                "input": f"${field}",
-                "method": "approximate"
-            }}
-        }},
-        {"$project": {
-        "_id": 0,
-        "field": {"$literal": field},
-        "count": 1,
-        "mean": {"$round": ["$mean", 3]},
-        "min": 1,
-        "max": 1,
-        "p25": {"$arrayElemAt": ["$pct", 0]},
-        "p50": {"$arrayElemAt": ["$pct", 1]},
-        "p75": {"$arrayElemAt": ["$pct", 2]}
-    }}
-    ]
+    fields = request.args.getlist("field") or ["Temperature (c)", "Salinity (ppt)", "pH"]
+    pipes = {}
 
-    doc = next(robot1.aggregate(pipeline), None) or {}
+    for field in fields:
+        pipes[field] = [
+            {"$group": {
+                "_id": None,
+                "count": {"$sum": 1},
+                "mean":  {"$avg": f"${field}"},
+                "min":   {"$min": f"${field}"},
+                "max":   {"$max": f"${field}"},
+                # MongoDB 5.2+: percentiles
+                "pct":   {"$percentile": {
+                    "p": [0.25, 0.5, 0.75],
+                    "input": f"${field}",
+                    "method": "approximate"
+                }}
+            }},
+            {"$project": {
+            "_id": 0,
+            "field": {"$literal": field},
+            "count": 1,
+            "mean": {"$round": ["$mean", 3]},
+            "min": 1,
+            "max": 1,
+            "p25": {"$arrayElemAt": ["$pct", 0]},
+            "p50": {"$arrayElemAt": ["$pct", 1]},
+            "p75": {"$arrayElemAt": ["$pct", 2]}
+        }}
+        ]
 
-    return jsonify({"field": field, **doc})
+    pipeline = [{"$facet": pipes}]
+    result = list(robot1.aggregate(pipeline))
+    raw = result[0] if result else {}
+
+    stats = {}
+    for field in fields:
+        stats[field] = raw.get(field, {})[0]
+
+
+    return jsonify(stats)
 
 @app.route("/api/outliers")
 def get_outliers():

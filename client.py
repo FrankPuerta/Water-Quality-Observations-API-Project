@@ -11,7 +11,7 @@ st.title("🌊 Water Quality Dashboard 🌊")
 st.header("CIS 3590 - Internship Ready Software Development")
 st.subheader("Frank, Chris, Mari, Oscar, Gabriel")
 
-st.write("Total Docs in DB:" + str(requests.get(f"{baseurl}/api/stats").json()))
+# st.write("Total Docs in DB:" + str(requests.get(f"{baseurl}/api/stats").json()))
 
 
 # """
@@ -43,12 +43,12 @@ st.sidebar.divider()
 left_button, right_button = st.sidebar.columns(2)
 if left_button.button("Pull Data", width="stretch"):
     left_button.success("Filter Applied")
-if right_button.button("API Health", type="secondary", width="stretch"):
-    response = requests.get(f"{baseurl}/api/health")
-    if response.status_code == 200:
-        right_button.success("API is Healthy!")
-    else:
-        right_button.error("API is Down!")
+# if right_button.button("API Health", width="stretch"):
+#     response = requests.get(f"{baseurl}/api/health")
+#     if response.status_code == 200:
+#         right_button.success("API is Healthy!")
+#     else:
+#         right_button.error("API is Down!")
 
 # """
 # --------------------------------------
@@ -79,9 +79,16 @@ with maps:
 # """
 st.divider()
 st.subheader("Statistics Panel")
-stat = st.selectbox("Select Statistic", options=["Temperature (c)", "Salinity (ppt)", "pH", "Turbid+ NTU", "Chl ug/L", "BGA-PC cells/mL", "ODOsat %", "ODO mg/L"])
-
+stats = st.multiselect("Select Statistic", options=["Temperature (c)", "Salinity (ppt)", "pH", "Turbid+ NTU", "Chl ug/L", "BGA-PC cells/mL", "ODOsat %", "ODO mg/L", "Conductivity (mmhos/cm)"])
+api_call = None
 if st.button("Get Stats"):
-    st.write(f"Fetching stats for: {stat}")
-    # st.write(f"{baseurl}/api/stats?stat={stat}") debugging
-    st.table(requests.get(f"{baseurl}/api/stats?field={stat}").json())
+    st.write(f"Fetching stats for: {stats}")
+    for stat in stats:
+        if stat == "Turbid+ NTU":
+            stat = "Turbid%2B%20NTU"
+        api_call = f"{api_call}&field={stat}"
+
+    # debugging ---
+    # st.write(f"{baseurl}/api/stats?{api_call}") 
+
+    st.table(requests.get(f"{baseurl}/api/stats?{api_call}").json())
