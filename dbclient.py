@@ -4,7 +4,7 @@ from pymongo import MongoClient
 import pandas as pd
 
 # Load .env file from the '.venv' subfolder
-load_dotenv(dotenv_path='./.venv/.env')
+load_dotenv(dotenv_path='.env')
 
 MONGO_USER = os.getenv("MONGO_USER")
 MONGO_PASS = os.getenv("MONGO_PASS")
