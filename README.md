@@ -13,7 +13,7 @@ in the .env file put in your mongodb info in this format:
 
 MONGO_PASS = your mongodb password
 MONGO_USER = mongodb user name
-MANGO_CLUSTER_URL = example "cluster0.9uszccd.mongodb.net"
+MONGO_CLUSTER_URL = example "cluster0.9uszccd.mongodb.net"
 
 ! Make sure to go to your mongoDB Atlas and add your Current IP address to list of allowed to make sure everything runs smoothly.  
 
