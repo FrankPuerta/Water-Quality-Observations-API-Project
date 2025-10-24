@@ -8,9 +8,9 @@ load_dotenv(dotenv_path='./.venv/.env')
 
 MONGO_USER = os.getenv("MONGO_USER")
 MONGO_PASS = os.getenv("MONGO_PASS")
-MANGO_CLUSTER_URL = os.getenv("MANGO_CLUSTER_URL")
+MONGO_CLUSTER_URL = os.getenv("MANGO_CLUSTER_URL")
 
-url = (f"mongodb+srv://{MONGO_USER}:{MONGO_PASS}@{MANGO_CLUSTER_URL}/?retryWrites=true&w=majority&appName=Cluster0")
+url = (f"mongodb+srv://{MONGO_USER}:{MONGO_PASS}@{MONGO_CLUSTER_URL}/?retryWrites=true&w=majority&appName=Cluster0")
 # print(url)
 
 client = MongoClient(url)
