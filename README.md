@@ -8,6 +8,7 @@ run ".\.venv\Scripts\Activate"
 run "pip install -r requirements.txt"
 you also mught wanna throw in "python.exe -m pip install --upgrade pip"
 
+in ./venv make a .gitignore file with only this in it: *
 in ./venv make a .env file
 in the .env file put in your mongodb info in this format:
 
