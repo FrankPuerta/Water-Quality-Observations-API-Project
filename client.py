@@ -91,7 +91,7 @@ df = pd.DataFrame(dataSet["items"])
 st.divider()
 st.subheader("Data Table")
 
-st.dataframe(df,use_container_width=True)
+st.dataframe(df,width="stretch")
 
 
 # """
