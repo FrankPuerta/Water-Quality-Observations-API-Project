@@ -1,26 +1,67 @@
-# Water-Quality-Observations-API-Project
+# 🌊 Water Quality Observations API Project
 
-*SETUP*
-First:
-Open terminal
-run "python -m venv .venv"
-run ".\.venv\Scripts\Activate"
-run "pip install -r requirements.txt"
-you also mught wanna throw in "python.exe -m pip install --upgrade pip"
+## 🚀 Setup Instructions
 
-in ./venv make a .gitignore file with only this in it: *
-in ./venv make a .env file
-in the .env file put in your mongodb info in this format:
+Follow these steps to set up and run the project successfully.
 
-MONGO_PASS = your mongodb password
-MONGO_USER = mongodb user name
-MONGO_CLUSTER_URL = example "cluster0.9uszccd.mongodb.net"
+---
 
-! Make sure to go to your mongoDB Atlas and add your Current IP address to list of allowed to make sure everything runs smoothly.  
+### 🧩 Step 1: Create and Activate a Virtual Environment
 
-If this is your first time running this program make sure to run dbclient.py in order to fill your database with required info
+Open your terminal and run the following commands:
 
-Next step is setting up environment:
+```
+# Create the virtual environment
+python -m venv .venv
 
-To run flask api run "flask --app flaskAPI run"
-To run streamlit run "streamlit run client.py"
+# Activate it
+# On Windows:
+.\.venv\Scripts\activate
+
+# On macOS/Linux:
+source .venv/bin/activate
+```
+Then install all the dependencies:
+```
+pip install -r requirements.txt
+```
+
+Optional but recommended:
+```
+python.exe -m pip install --upgrade pip
+```
+
+### 🗂️ Step 2: Create Configuration Files
+Inside your project’s root folder:
+1.	Create a .gitignore file with the following content:
+```
+*
+```
+
+2. Create a .env file and add your MongoDB credentials in this format:
+```
+MONGO_PASS = your_mongodb_password
+MONGO_USER = your_mongodb_username
+MONGO_CLUSTER_URL = cluster0.9uszccd.mongodb.net
+```
+
+## ⚠️ Important:
+#### Go to your MongoDB Atlas account and add your current IP address to the list of allowed addresses. Otherwise, your connection may fail.
+
+### 🧠 Step 3: Initialize the Database
+If this is your first time running the program, you must populate your database with the required information by running:
+```
+python dbclient.py
+```
+
+### ⚙️ Step 4: Run the Applications
+To start the Flask API, run:
+```
+flask --app flaskAPI run
+```
+To run the Streamlit client run:
+```
+streamlit run client.py
+```
+
+### Your Flask API and Streamlit frontend should now be running and connected to your MongoDB database.
