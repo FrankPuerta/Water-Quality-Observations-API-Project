@@ -47,7 +47,12 @@ python.exe -m pip install --upgrade pip
 Inside your project’s root folder:
 1.	Create a .gitignore file with the following content:
 ```
-*
+.venv/
+.venv/pyvenv.cfg
+.env
+__pycache__/
+*.pyc
+.venv/pyvenv.cfg
 ```
 
 2. Create a .env file and add your MongoDB credentials in this format:
