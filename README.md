@@ -8,6 +8,18 @@ Follow these steps to set up and run the project successfully.
 
 ### 🧩 Step 1: Create and Activate a Virtual Environment
 
+Simple Setup
+
+```
+Open your terminal and run the following commands:
+For PC:
+setup_env.bat
+
+For Mac/Linux:
+chmod +x setup_env.sh
+./setup_env.sh
+```
+
 Open your terminal and run the following commands:
 
 ```
@@ -55,6 +67,17 @@ python dbclient.py
 ```
 
 ### ⚙️ Step 4: Run the Applications
+Simple Start:
+For PC:
+```
+run_app.bat
+```
+For Mac/Linux:
+```
+chmod +x run_servers.sh
+./run_servers.sh
+```
+
 To start the Flask API, run:
 ```
 flask --app flaskAPI run
