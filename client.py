@@ -79,13 +79,6 @@ if "last_refresh" not in st.session_state:
 if "api_url" not in st.session_state:
     st.session_state.api_url = ""
 
-# URL for /api/observations endpoint with query parameters based on sidebar inputs
-# observations_url = f"/api/observations?start={start_date}&end={end_date}&temp_min={temp_min}&temp_max={temp_max}&sal_min={sal_min}&sal_max={sal_max}&odo_min={odo_min}&odo_max={odo_max}&limit={limit}&page={page}"
-# observations_dataSet = requests.get(f"{baseurl}{observations_url}").json()
-# observations_df = pd.DataFrame(observations_dataSet["items"])
-# st.session_state.df = observations_df
-# st.session_state.api_url = observations_url
-
 st.divider()
 st.subheader("Data Table")
 
@@ -129,9 +122,6 @@ df = pd.DataFrame(linechart_dataSet["data"])
 
 with lineChart:
     st.write("Line Chart")
-    
-
-    
 
     min_time, max_time = st.slider(
         "Time Range",
@@ -155,9 +145,17 @@ with histogram:
 
 with scatterPlot:
     st.write("Scatter Plot")
+
+    fig = px.scatter(df, x="Salinity (ppt)", y="Temperature (c)", color="ODO mg/L")
+    st.plotly_chart(fig)
     
 with maps:
     st.write("Maps")
+
+    figMap = px.scatter_mapbox(df, lat="Latitude", lon="Longitude", color="pH", hover_data=df, zoom=17, mapbox_style="open-street-map")
+    st.plotly_chart(figMap)
+
+# IF WE WANT ANY MORE VISUALIZATIONS, WE CAN ADD THEM HERE.
     
 
 # """
