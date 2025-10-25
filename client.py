@@ -9,7 +9,6 @@ st.set_page_config(page_title="Dashboard",
                    layout="wide")
 st.title("🌊 Water Quality Dashboard 🌊")
 st.header("CIS 3590 - Internship Ready Software Development")
-st.subheader("Frank, Chris, Mari, Oscar, Gabriel")
 
 # st.write("Total Docs in DB:" + str(requests.get(f"{baseurl}/api/stats").json()))
 
@@ -57,6 +56,8 @@ odo_min, odo_max = st.sidebar.slider(
         value=(2.0, 8.0),
         step=0.5
     )
+
+
 # --------------------------------------
 st.sidebar.divider()
 st.sidebar.subheader("Limit and Pagination")
@@ -64,36 +65,50 @@ limit = st.sidebar.number_input("Limit", min_value=100, max_value=1000, value=10
 page = st.sidebar.number_input("Page", min_value=1, max_value=30, value=1)
 
 
-# --------------------------------------
-st.sidebar.divider()
-left_button, right_button = st.sidebar.columns(2)
-if left_button.button("Pull Data", width="stretch"):
-    left_button.success("Filter Applied")
-# if right_button.button("API Health", width="stretch"):
-#     response = requests.get(f"{baseurl}/api/health")
-#     if response.status_code == 200:
-#         right_button.success("API is Healthy!")
-#     else:
-#         right_button.error("API is Down!")
-
 # """
 # --------------------------------------
 # -           Data table               -
 # --------------------------------------
 # """
 
-q_url = f"/api/observations?start={start_date}&end={end_date}&temp_min={temp_min}&temp_max={temp_max}&sal_min={sal_min}&sal_max={sal_max}&odo_min={odo_min}&odo_max={odo_max}&limit={limit}&page={page}"
-dataSet = requests.get(f"{baseurl}{q_url}").json()
+# ---- UI state ----
+if "df" not in st.session_state:
+    st.session_state.df = pd.DataFrame()
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = None
+if "api_url" not in st.session_state:
+    st.session_state.api_url = ""
 
-# MAIN DATAFRAME PULL FROM HERE vvvv-----------------
-df = pd.DataFrame(dataSet["items"])
+# URL for /api/observations endpoint with query parameters based on sidebar inputs
+# observations_url = f"/api/observations?start={start_date}&end={end_date}&temp_min={temp_min}&temp_max={temp_max}&sal_min={sal_min}&sal_max={sal_max}&odo_min={odo_min}&odo_max={odo_max}&limit={limit}&page={page}"
+# observations_dataSet = requests.get(f"{baseurl}{observations_url}").json()
+# observations_df = pd.DataFrame(observations_dataSet["items"])
+# st.session_state.df = observations_df
+# st.session_state.api_url = observations_url
 
 st.divider()
 st.subheader("Data Table")
 
-st.dataframe(df,use_container_width=True)
+refresh = st.button("🔄Refresh Data",  type="primary")
 
+if refresh:
+    try:
+        with st.spinner("Fetching data..."):
+            observations_url = f"/api/observations?start={start_date}&end={end_date}&temp_min={temp_min}&temp_max={temp_max}&sal_min={sal_min}&sal_max={sal_max}&odo_min={odo_min}&odo_max={odo_max}&limit={limit}&page={page}"
+            observations_dataSet = requests.get(f"{baseurl}{observations_url}").json()
+            observations_df = pd.DataFrame(observations_dataSet["items"])
 
+        st.session_state.df = observations_df
+        st.session_state.api_url = observations_url
+        st.success("Data refreshed!")
+    except requests.HTTPError as e:
+        st.error(f"HTTP error: {e}")
+    except requests.RequestException as e:
+        st.error(f"Request failed: {e}")
+    except ValueError as e:
+        st.error(f"Data parsing failed: {e}")
+
+st.dataframe(st.session_state.df, use_container_width=True, key="main_df")
 # """
 # --------------------------------------
 # -           Visualizations           -
@@ -101,12 +116,34 @@ st.dataframe(df,use_container_width=True)
 # """
 st.divider()
 st.subheader("Visualizations Panel")
+date = st.segmented_control(label="Select Date Field", options=["10/16/2021", "12/16/2021", "10/07/2022", "11/16/2022"] , key="linechart_date") 
+if date == None:
+    date = "10/16/2021"
+st.write(f"Selected Date: {date}")
 lineChart, histogram, scatterPlot, maps = st.tabs(["Line Chart", "Histogram", "Scatter Plot", "Maps"])
 
 
 with lineChart:
     st.write("Line Chart")
-    st.line_chart(df[["Temperature (c)", "Salinity (ppt)", "ODO mg/L"]], x_label="Index", y_label="Values", use_container_width=True)
+    
+
+    linechart_url = f"{baseurl}/api/lineChart?date={date}"
+    linechart_dataSet = requests.get(linechart_url).json()
+    linechart_df = pd.DataFrame(linechart_dataSet["data"])
+
+    min_time, max_time = st.slider(
+        "Time Range",
+        min_value=0,
+        max_value=len(linechart_df),
+        value=(50, 250),
+        step=5
+    )
+
+    linechart_df = linechart_df.iloc[int(min_time):int(max_time)]
+    # st.write(linechart_df.columns)
+    st.line_chart(linechart_df[["pH","Temperature (c)", "Salinity (ppt)", "ODO mg/L", "Time"]], x="Time", y=["pH","Temperature (c)", "Salinity (ppt)", "ODO mg/L"], width='stretch')
+    # st.line_chart(linechart_df[["Temperature (c)", "Salinity (ppt)", "ODO mg/L"]], x="Time", y=["Temperature (c)", "Salinity (ppt)", "ODO mg/L"], width='stretch')
+    # st.line_chart(observations_df[["Temperature (c)", "Salinity (ppt)", "ODO mg/L"]], x_label="Index", y_label="Values", width='stretch')
     
 with histogram:
     st.write("Histogram")
@@ -147,3 +184,8 @@ if st.button("Get Stats"):
 
 st.divider()
 st.subheader("Outliers Panel")
+
+st.divider()
+
+st.write("Created By:")
+st.subheader("Gabriel")
