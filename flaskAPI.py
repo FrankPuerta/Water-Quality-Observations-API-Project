@@ -47,8 +47,9 @@ def _norm_date_to_db(s) -> str | None:
         return None
     for fmt in ("%m/%d/%Y", "%m/%d/%y"):
         try:
-            dt = datetime.strptime(s, fmt)
-            return dt.strftime("%m/%d/%y")  # <-- matches your Mongo 'Date' field
+            dt = datetime.strptime(s, "%m/%d/%Y")
+            # Format as m/d/yy (no leading zeros)
+            return f"{dt.month}/{dt.day}/{dt.strftime('%y')}" # <-- matches your Mongo 'Date' field
         except ValueError:
             continue
     return None
@@ -63,7 +64,7 @@ def get_observations():
     start_in = _norm_date_to_db(args.get("start"))
     end_in   = _norm_date_to_db(args.get("end"))
 
-    allowed_dates = ["10/16/21", "12/16/21", "10/07/22", "11/16/22"]
+    allowed_dates = ["10/21/21", "12/16/21", "10/07/22", "11/16/22"]
 
     if args.get("start") and not start_in:
         errors.append("Invalid 'start' date. Use MM/DD/YY or MM/DD/YYYY.")
@@ -213,20 +214,27 @@ def get_line_chart_data():
     arg = request.args
     field = arg.get("date")
 
-    if field not in ["10/16/2021", "12/16/2021", "10/07/2022", "11/16/2022"]:
-        return jsonify({"error": "Invalid field. Must be one of: '10/16/2021', '12/16/2021', '10/07/2022', '11/16/2022'."}), 400
+    if field not in ["10/21/2021", "12/16/2021", "10/07/2022", "11/16/2022"]:
+        return jsonify({"error": "Invalid field. Must be one of: '10/21/2021', '12/16/2021', '10/07/2022', '11/16/2022'."}), 400
 
+    # Assuming 'Date' is stored in the format 'MM/DD/YY' in the database
+    norm_date = _norm_date_to_db(field)
+    if not norm_date:
+        return jsonify({"error": "Invalid date format. Use MM/DD/YY or MM/DD/YYYY."}), 400
+    
+    # Query the database for the specified date
     cursor = robot1.find(
-        {},
+        {"Date": norm_date},
         {
             "_id": 0,
             "Salinity (ppt)": 1,
             "Temperature (c)": 1,
             "ODO mg/L": 1,
+            "Latitude" : 1,
+            "Longitude" : 1,
             "pH": 1,
             "Date": 1,
-            "Time": 1,
-            field: 1
+            "Time": 1
         },
     ).sort("Time", 1)
 

@@ -26,8 +26,8 @@ st.sidebar.subheader("Min/Max Filters")
 
 start_date, end_date = st.sidebar.select_slider(
         "Date Range",
-        options = ["10/16/2021", "12/16/2021", "10/07/2022", "11/16/2022"], 
-        value = ("10/16/2021","11/16/2022")
+        options = ["10/21/2021", "12/16/2021", "10/07/2022", "11/16/2022"], 
+        value = ("10/21/2021","11/16/2022")
     )
 
 st.sidebar.subheader("Temperature Filter")
@@ -116,30 +116,32 @@ st.dataframe(st.session_state.df, use_container_width=True, key="main_df")
 # """
 st.divider()
 st.subheader("Visualizations Panel")
-date = st.segmented_control(label="Select Date Field", options=["10/16/2021", "12/16/2021", "10/07/2022", "11/16/2022"] , key="linechart_date") 
+date = st.segmented_control(label="Select Date Field", options=["10/21/2021", "12/16/2021", "10/07/2022", "11/16/2022"] , key="linechart_date") 
 if date == None:
     date = "10/16/2021"
 st.write(f"Selected Date: {date}")
 lineChart, histogram, scatterPlot, maps = st.tabs(["Line Chart", "Histogram", "Scatter Plot", "Maps"])
+
+linechart_url = f"{baseurl}/api/lineChart?date={date}"
+linechart_dataSet = requests.get(linechart_url).json()
+df = pd.DataFrame(linechart_dataSet["data"])
 
 
 with lineChart:
     st.write("Line Chart")
     
 
-    linechart_url = f"{baseurl}/api/lineChart?date={date}"
-    linechart_dataSet = requests.get(linechart_url).json()
-    linechart_df = pd.DataFrame(linechart_dataSet["data"])
+    
 
     min_time, max_time = st.slider(
         "Time Range",
         min_value=0,
-        max_value=len(linechart_df),
+        max_value=len(df),
         value=(50, 250),
         step=5
     )
 
-    linechart_df = linechart_df.iloc[int(min_time):int(max_time)]
+    linechart_df = df.iloc[int(min_time):int(max_time)]
     # st.write(linechart_df.columns)
     st.line_chart(linechart_df[["pH","Temperature (c)", "Salinity (ppt)", "ODO mg/L", "Time"]], x="Time", y=["pH","Temperature (c)", "Salinity (ppt)", "ODO mg/L"], width='stretch')
     # st.line_chart(linechart_df[["Temperature (c)", "Salinity (ppt)", "ODO mg/L"]], x="Time", y=["Temperature (c)", "Salinity (ppt)", "ODO mg/L"], width='stretch')
@@ -147,7 +149,10 @@ with lineChart:
     
 with histogram:
     st.write("Histogram")
-    
+
+
+    st.bar_chart(df, y="Temperature (c)", x="Salinity (ppt)")
+
 with scatterPlot:
     st.write("Scatter Plot")
     
