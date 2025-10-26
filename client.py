@@ -111,12 +111,13 @@ st.divider()
 st.subheader("Visualizations Panel")
 date = st.segmented_control(label="Select Date Field", options=["10/21/2021", "12/16/2021", "10/07/2022", "11/16/2022"] , key="linechart_date") 
 if date == None:
-    date = "10/16/2021"
+    date = "10/21/2021"
 st.write(f"Selected Date: {date}")
 lineChart, histogram, scatterPlot, maps = st.tabs(["Line Chart", "Histogram", "Scatter Plot", "Maps"])
 
 linechart_url = f"{baseurl}/api/lineChart?date={date}"
 linechart_dataSet = requests.get(linechart_url).json()
+# st.write(linechart_dataSet)
 df = pd.DataFrame(linechart_dataSet["data"])
 
 
@@ -165,6 +166,7 @@ with maps:
 # """
 st.divider()
 st.subheader("Statistics Panel")
+# Consider removing "Conductivity (mmhos/cm)"
 stats = st.multiselect("Select Statistic", options=["Temperature (c)", "Salinity (ppt)", "pH", "Turbid+ NTU", "Chl ug/L", "BGA-PC cells/mL", "ODOsat %", "ODO mg/L", "Conductivity (mmhos/cm)"])
 api_call = None
 if st.button("Get Stats"):
@@ -187,11 +189,111 @@ if st.button("Get Stats"):
 
 st.divider()
 st.subheader("Outliers Panel")
+outlier_date = st.segmented_control(
+    label="Select Date Field", 
+    options=["10/21/2021", "12/16/2021", "10/07/2022", "11/16/2022"], 
+    key="outlier_date"
+) 
+if outlier_date == None:
+    outlier_date = "10/21/2021"
+st.write(f"Selected Date: {outlier_date}")
+
+st.button("Refresh")
+try:
+    with st.spinner("Fetching data..."):
+        outlier_url = f"{baseurl}/api/outliers?date={outlier_date}"    
+        response = requests.get(outlier_url)
+        response.raise_for_status() # Raises an error if the server sends back a 404
+        outlier_data = response.json()
+        outlier_df = pd.DataFrame(outlier_data["outliers"])
+
+        if outlier_df.empty:
+            st.success("✅ No outliers found for this date!")
+        else:
+            st.write(f"Outliers found for this date: {outlier_date}")
+
+        # DATA TABLE
+        display_df = outlier_df
+
+        reason_col_name = "Outlier_Reason(s)" # The correct name
+        if reason_col_name not in outlier_df.columns:
+            if "Outlier_Reasons(s)" in outlier_df.columns: # Maybe typo (couldnt find it)
+                reason_col_name = "Outlier_Reasons(s)"
+            else:
+                reason_col_name = None # Not found
+            
+
+        # Check if the columns we care about exist
+        if "Time" in outlier_df.columns and reason_col_name:
+            
+            # Get all columns
+            all_cols = list(outlier_df.columns)
+            
+            # Remove our special columns so we don't duplicate them
+            all_cols.remove("Time")
+            all_cols.remove(reason_col_name)
+            
+            # Manage new order
+            new_order = ["Time", reason_col_name] + all_cols
+            
+            # Re-index the DataFrame with this new order
+            display_df = outlier_df[new_order]
+
+        # Setting "Time" as the index (if it exists)
+        if "Time" in display_df.columns:
+            display_df = display_df.set_index("Time")
+
+            st.dataframe(display_df, use_container_width=True)
 
 
+        # SCATTER PLOT
+        st.write("Outlier Scatter Plot:")
+        viz_outliers = px.scatter(
+            outlier_df,
+            x="Salinity (ppt)", 
+            y="Temperature (c)", 
+            color="pH",
+            title="Outlier Distribution"
+        )
 
+        # sp Colors
+        plot_x = "Salinity (ppt)"
+        plot_y = "Temperature (c)"
+        plot_color = "pH"
+        required_plot_cols = [plot_x, plot_y, plot_color]
+
+        all_cols_present = True
+        missing_col = ""
+
+        for col in required_plot_cols:
+            if col not in outlier_df.columns:
+                all_cols_present = False
+                mising_col = col
+                break
+        
+        if all_cols_present:
+            viz_outliers = px.scatter(
+                outlier_df,
+                x = plot_x,
+                y = plot_y,
+                color = plot_color,
+                title = "Outlier Distribution"
+            )
+
+        st.plotly_chart(viz_outliers, use_container_width=True)
+
+except requests.HTTPError as e:
+    st.error(f"HTTP error: {e}")
+except requests.RequestException as e:
+    st.error(f"Request failed: {e}")
+except ValueError as e:
+    st.error(f"Data parsing failed: {e}")
+
+# """
+# --------------------------------------
+# -          Bottom Panel              -
+# --------------------------------------
+# """
 st.divider()
-
-# if any of ya actually look at the code before demo ya can edit it
 st.write("Created By:")
-st.subheader("Gabriel R. Alamo")
+st.subheader("Chris, Frank, Gabriel, Mari, Oscar")
