@@ -115,7 +115,7 @@ if date == None:
 st.write(f"Selected Date: {date}")
 lineChart, histogram, scatterPlot, maps = st.tabs(["Line Chart", "Histogram", "Scatter Plot", "Maps"])
 
-linechart_url = f"{baseurl}/api/lineChart?date={date}"
+linechart_url = f"{baseurl}/api/visual?date={date}"
 linechart_dataSet = requests.get(linechart_url).json()
 # st.write(linechart_dataSet)
 df = pd.DataFrame(linechart_dataSet["data"])

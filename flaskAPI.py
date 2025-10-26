@@ -33,7 +33,7 @@ def index():
         "routes":{
             "/api/health": "Health of API",
             "/api/observations?start=<start_date>&end=<end_date>&temp_min=<temp_min>&temp_max=<temp_max>&sal_min=<sal_min>&sal_max=<sal_max>&odo_min=<odo_min>&odo_max=<odo_max>&limit=<limit>&page=<page>": "Filtered water quality observations based on query parameters",
-            "/api/lineChart": "Data for line chart visualization",
+            "/api/visual": "Data for line chart visualization",
             "/api/stats": "Water quality statistics",
             "/api/outliers": "Water quality outlier information",
         }
@@ -212,7 +212,7 @@ def get_stats():
 
     return jsonify(stats)
 
-@app.route("/api/lineChart")
+@app.route("/api/visual")
 def get_line_chart_data():
     arg = request.args
     field = arg.get("date")

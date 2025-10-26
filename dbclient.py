@@ -4,13 +4,13 @@ from pymongo import MongoClient
 import pandas as pd
 
 # Load .env file from the '.venv' subfolder
-load_dotenv(dotenv_path='.env')
+load_dotenv(dotenv_path='./.venv/.env')
 
 MONGO_USER = os.getenv("MONGO_USER")
 MONGO_PASS = os.getenv("MONGO_PASS")
 MONGO_CLUSTER_URL = os.getenv("MONGO_CLUSTER_URL")
 
-url = (f"mongodb+srv://{MONGO_USER}:{MONGO_PASS}@{MONGO_CLUSTER_URL}/?retryWrites=true&w=majority&appName=Cluster0")
+url = (f"mongodb+srv://{MONGO_USER}:{MONGO_PASS}@{MONGO_CLUSTER_URL}/?appName=Cluster0")
 # print(url)
 
 client = MongoClient(url)
