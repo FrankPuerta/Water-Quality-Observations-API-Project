@@ -188,7 +188,10 @@ if st.button("Get Stats"):
 st.divider()
 st.subheader("Outliers Panel")
 
+
+
 st.divider()
 
+# if any of ya actually look at the code before demo ya can edit it
 st.write("Created By:")
-st.subheader("Gabriel")
+st.subheader("Gabriel R. Alamo")
