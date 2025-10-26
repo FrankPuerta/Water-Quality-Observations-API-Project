@@ -305,14 +305,7 @@ def get_outliers():
 
     # Check if we have any data left to analyze
     if valid_df.empty:
-        return jsonify({"error": "No data found for the specified field."}), 404
-    
-    # To avoid any errors
-    valid_df = valid_df.copy()
-    for col in available_columns:
-        valid_df[col] = pd.to_numeric(valid_df[col], errors='coerce')
-
-    valid_df = valid_df.dropna(subset=available_columns)
+        return jsonify({"error": f"Data for {field} contained non-numeric stuff and could not be analyzed."}), 404
     
     means = valid_df[available_columns].mean(axis=0)
     stds = valid_df[available_columns].std(axis=0, ddof=0)
@@ -341,6 +334,12 @@ def get_outliers():
         # Avoid SettingWithCopyWarning
         outlier_df = outlier_df.copy()
         outlier_df["Outlier_Reason(s)"] = outlier_reasons_list
+        
+        # Pushing answer key column to the left
+        all_cols = list(outlier_df.columns)
+        all_cols.remove("Outlier_Reason(s)")
+        new_order = ["Outlier_Reason(s)"] + all_cols
+        outlier_df = outlier_df[new_order]
 
     return jsonify({
         "outliers": outlier_df.to_dict('records')

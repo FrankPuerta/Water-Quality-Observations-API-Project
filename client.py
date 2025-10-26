@@ -212,50 +212,75 @@ try:
         else:
             st.write(f"Outliers found for this date: {outlier_date}")
 
-            # DATA TABLE
-            if "Time" in outlier_df.columns:
-                display_df = outlier_df.set_index("Time")
+        # DATA TABLE
+        display_df = outlier_df
+
+        reason_col_name = "Outlier_Reason(s)" # The correct name
+        if reason_col_name not in outlier_df.columns:
+            if "Outlier_Reasons(s)" in outlier_df.columns: # Maybe typo (couldnt find it)
+                reason_col_name = "Outlier_Reasons(s)"
             else:
-                display_df = outlier_df
+                reason_col_name = None # Not found
+            
+
+        # Check if the columns we care about exist
+        if "Time" in outlier_df.columns and reason_col_name:
+            
+            # Get all columns
+            all_cols = list(outlier_df.columns)
+            
+            # Remove our special columns so we don't duplicate them
+            all_cols.remove("Time")
+            all_cols.remove(reason_col_name)
+            
+            # Manage new order
+            new_order = ["Time", reason_col_name] + all_cols
+            
+            # Re-index the DataFrame with this new order
+            display_df = outlier_df[new_order]
+
+        # Setting "Time" as the index (if it exists)
+        if "Time" in display_df.columns:
+            display_df = display_df.set_index("Time")
 
             st.dataframe(display_df, use_container_width=True)
 
 
-            # SCATTER PLOT
-            st.write("Outlier Scatter Plot:")
+        # SCATTER PLOT
+        st.write("Outlier Scatter Plot:")
+        viz_outliers = px.scatter(
+            outlier_df,
+            x="Salinity (ppt)", 
+            y="Temperature (c)", 
+            color="pH",
+            title="Outlier Distribution"
+        )
+
+        # sp Colors
+        plot_x = "Salinity (ppt)"
+        plot_y = "Temperature (c)"
+        plot_color = "pH"
+        required_plot_cols = [plot_x, plot_y, plot_color]
+
+        all_cols_present = True
+        missing_col = ""
+
+        for col in required_plot_cols:
+            if col not in outlier_df.columns:
+                all_cols_present = False
+                mising_col = col
+                break
+        
+        if all_cols_present:
             viz_outliers = px.scatter(
                 outlier_df,
-                x="Salinity (ppt)", 
-                y="Temperature (c)", 
-                color="pH",
-                title="Outlier Distribution"
+                x = plot_x,
+                y = plot_y,
+                color = plot_color,
+                title = "Outlier Distribution"
             )
 
-            # sp Colors
-            plot_x = "Salinity (ppt)"
-            plot_y = "Temperature (c)"
-            plot_color = "pH"
-            required_plot_cols = [plot_x, plot_y, plot_color]
-
-            all_cols_present = True
-            missing_col = ""
-
-            for col in required_plot_cols:
-                if col not in outlier_df.columns:
-                    all_cols_present = False
-                    mising_col = col
-                    break
-            
-            if all_cols_present:
-                viz_outliers = px.scatter(
-                    outlier_df,
-                    x = plot_x,
-                    y = plot_y,
-                    color = plot_color,
-                    title = "Outlier Distribution"
-                )
-
-            st.plotly_chart(viz_outliers, use_container_width=True)
+        st.plotly_chart(viz_outliers, use_container_width=True)
 
 except requests.HTTPError as e:
     st.error(f"HTTP error: {e}")
