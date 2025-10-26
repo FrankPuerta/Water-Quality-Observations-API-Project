@@ -13,7 +13,7 @@ Simple Setup
 ```
 Open your terminal and run the following commands:
 For PC:
-setup_env.bat
+.\setup_env.bat
 
 For Mac/Linux:
 chmod +x setup_env.sh
@@ -75,7 +75,7 @@ python dbclient.py
 Simple Start:
 For PC:
 ```
-run_app.bat
+.\run_app.bat
 ```
 For Mac/Linux:
 ```
