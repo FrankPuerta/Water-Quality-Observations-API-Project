@@ -4,6 +4,9 @@ import os
 from pymongo import MongoClient
 from datetime import datetime
 
+import pandas as pd
+import numpy as np
+
 # Load .env file from the '.venv' subfolder
 load_dotenv(dotenv_path='./.venv/.env')
 
@@ -47,7 +50,7 @@ def _norm_date_to_db(s) -> str | None:
         return None
     for fmt in ("%m/%d/%Y", "%m/%d/%y"):
         try:
-            dt = datetime.strptime(s, "%m/%d/%Y")
+            dt = datetime.strptime(s, fmt)
             # Format as m/d/yy (no leading zeros)
             return f"{dt.month}/{dt.day}/{dt.strftime('%y')}" # <-- matches your Mongo 'Date' field
         except ValueError:
@@ -252,8 +255,87 @@ def get_line_chart_data():
 
 @app.route("/api/outliers")
 def get_outliers():
-    return jsonify({"message": "This endpoint will return water quality observations."})
+    arg = request.args
+    field = arg.get("date")
 
+    if field not in ["10/21/2021", "12/16/2021", "10/07/2022", "11/16/2022"]:
+        return jsonify({"error": "Invalid field. Must be one of: '10/21/2021', '12/16/2021', '10/07/2022', '11/16/2022'."}), 400
+
+    # Assuming 'Date' is stored in the format 'MM/DD/YY' in the database
+    norm_date = _norm_date_to_db(field)
+    if not norm_date:
+        return jsonify({"error": "Invalid date format. Use MM/DD/YY or MM/DD/YYYY."}), 400
+
+    # We fetch ALL columns, since the Z-score needs them
+    cursor = robot1.find(
+        {"Date": norm_date},
+        {"_id": 0}, # Get everything, remove the _id
+    ).sort("Time", 1)
+
+    data = list(cursor)
+
+    if not data:
+        # Return an empty list
+        return jsonify({"error": "No data found for the specified field."}), 404
+    
+    df = pd.DataFrame(data)
+
+    columns = [
+        "Temperature (c)", 
+        "Salinity (ppt)", 
+        "Temp C", 
+        "Sal ppt", 
+        "pH", 
+        "pH mV", 
+        "Turbid+ NTU", 
+        "Chl ug/L",
+        "BGA-PC cells/mL",
+        "ODOsat %",
+        "ODO mg/L"
+    ]
+
+    # Drop rows where the columns dont have data
+    valid_df = df.dropna(subset=columns)
+
+    # Check if we have any data left to analyze
+    if valid_df.empty:
+        return jsonify({"error": "No data found for the specified field."}), 404
+    
+    means = valid_df[columns].mean(axis=0)
+    stds = valid_df[columns].std(axis=0, ddof=0)
+
+    # Handle columns with zero standard deviation (all same value)
+    stds[stds == 0] = 1 # Setting 0's to 1 so we don't divide by zero
+
+    z_scores = (valid_df[columns] - means) / stds
+
+    # Mask of non-outliers
+    mask = (np.abs(z_scores) <= 3).all(axis=1)
+
+    # Put all NON-masked data in here.
+    outlier_df = valid_df[~mask]
+
+    if not outlier_df.empty:
+        outlier_z_scores = z_scores[~mask]
+
+        outlier_reasons = []
+        for index, row in outlier_z_score_iterrows():
+            reasons = []
+            for col, z_val in row.items():
+                if abs(z_val) > 3:
+                    reason_string = f"{col} (Z: {z_val:.2f})"
+                    reasons.append(reason_string)
+            outlier_reasons.append(", ".join(reasons))
+        
+        # This is specifically to avoid a SettingWithCopyWarning
+        outliers_df = outliers_df.copy()
+
+        outliers_df["Outlier_Reasons(s)"] = outlier_reasons
+
+    return jsonify({
+        "outliers": outlier_df.to_dict('records')
+    })
+    
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
