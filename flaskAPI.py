@@ -280,7 +280,7 @@ def get_outliers():
     
     df = pd.DataFrame(data)
 
-    columns = [
+    required_columns = [
         "Temperature (c)", 
         "Salinity (ppt)", 
         "Temp C", 
@@ -294,20 +294,32 @@ def get_outliers():
         "ODO mg/L"
     ]
 
-    # Drop rows where the columns dont have data
-    valid_df = df.dropna(subset=columns)
+    # Only analyze columns that actually exist in the fetched documents
+    available_columns = [col for col in required_columns if col in df.columns]
+
+    if not available_columns:
+        return jsonify({"error": "No numeric columns available to analyze."}), 400
+
+    # Drop rows where the selected columns don't have data
+    valid_df = df.dropna(subset=available_columns)
 
     # Check if we have any data left to analyze
     if valid_df.empty:
         return jsonify({"error": "No data found for the specified field."}), 404
     
-    means = valid_df[columns].mean(axis=0)
-    stds = valid_df[columns].std(axis=0, ddof=0)
+    # To avoid any errors
+    valid_df = valid_df.copy()
+    for col in available_columns:
+        valid_df[col] = pd.to_numeric(valid_df[col], errors='coerce')
 
-    # Handle columns with zero standard deviation (all same value)
-    stds[stds == 0] = 1 # Setting 0's to 1 so we don't divide by zero
+    valid_df = valid_df.dropna(subset=available_columns)
+    
+    means = valid_df[available_columns].mean(axis=0)
+    stds = valid_df[available_columns].std(axis=0, ddof=0)
+    stds[stds == 0] = 1 # Avoid division by zero
 
-    z_scores = (valid_df[columns] - means) / stds
+    # Compute z-scores for the available columns
+    z_scores = (valid_df[available_columns] - means) / stds
 
     # Mask of non-outliers
     mask = (np.abs(z_scores) <= 3).all(axis=1)
@@ -315,22 +327,20 @@ def get_outliers():
     # Put all NON-masked data in here.
     outlier_df = valid_df[~mask]
 
+    # If we found outliers, compute reasons and the specific fields that triggered them
     if not outlier_df.empty:
-        outlier_z_scores = z_scores[~mask]
+        outlier_z_scores = z_scores.loc[~mask]
 
-        outlier_reasons = []
-        for index, row in outlier_z_score_iterrows():
-            reasons = []
-            for col, z_val in row.items():
-                if abs(z_val) > 3:
-                    reason_string = f"{col} (Z: {z_val:.2f})"
-                    reasons.append(reason_string)
-            outlier_reasons.append(", ".join(reasons))
-        
-        # This is specifically to avoid a SettingWithCopyWarning
-        outliers_df = outliers_df.copy()
+        outlier_reasons_list = []
 
-        outliers_df["Outlier_Reasons(s)"] = outlier_reasons
+        for index, row in outlier_z_scores.iterrows():
+            reasons = [f"{col} (Z: {z_val:.2f})" for col, z_val in row.items() if abs(z_val) > 3]
+
+            outlier_reasons_list.append(", ".join(reasons))
+
+        # Avoid SettingWithCopyWarning
+        outlier_df = outlier_df.copy()
+        outlier_df["Outlier_Reason(s)"] = outlier_reasons_list
 
     return jsonify({
         "outliers": outlier_df.to_dict('records')

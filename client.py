@@ -210,15 +210,18 @@ try:
         if outlier_df.empty:
             st.success("✅ No outliers found for this date!")
         else:
-            st.warning(f"Outliers found for this date: {outlier_date}")
+            st.write(f"Outliers found for this date: {outlier_date}")
 
+            # DATA TABLE
             if "Time" in outlier_df.columns:
-                displayed_outlier_df = outlier_df.set_index("Time")
+                display_df = outlier_df.set_index("Time")
             else:
-                displayed_outlier_df = outlier_df
+                display_df = outlier_df
 
-            st.dataframe(displayed_outlier_df, use_container_width=True)
+            st.dataframe(display_df, use_container_width=True)
 
+
+            # SCATTER PLOT
             st.write("Outlier Scatter Plot:")
             viz_outliers = px.scatter(
                 outlier_df,
@@ -228,7 +231,7 @@ try:
                 title="Outlier Distribution"
             )
 
-            # Coloring outliers
+            # sp Colors
             plot_x = "Salinity (ppt)"
             plot_y = "Temperature (c)"
             plot_color = "pH"
